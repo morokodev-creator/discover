@@ -1,0 +1,125 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { sanityClient } from 'sanity:client';
+
+const query = `*[_type == "contactPage"][0]{
+  heroTitle,
+  heroSubtitle,
+  "heroBgUrl": heroBackground.asset->url,
+  sectionTitle,
+  sectionDescription,
+  "sideImageUrl": sideImage.asset->url,
+  contactCards[]{
+    icon,
+    title,
+    details
+  }
+}`;
+
+const data = await sanityClient.fetch(query);
+
+// Respaldos por si aún no cargas datos en Sanity
+const defaultCards = [
+  {
+    icon: 'phone',
+    title: 'Línea Gratuita',
+    details: '0800-44-300\nLunes a Viernes: 9am a 6pm\nSábados: 9am a 1pm',
+  },
+  {
+    icon: 'mobile',
+    title: 'WhatsApp de Ventas',
+    details: '+51 987 654 321\nEscríbenos para una cotización rápida.',
+  },
+  {
+    icon: 'pin',
+    title: 'Oficina Principal',
+    details: 'Av. República de Panamá 4321\nSurquillo, Lima - Perú',
+  },
+];
+
+const heroTitle = data?.heroTitle || 'CONTÁCTANOS';
+const heroSubtitle = data?.heroSubtitle || 'El primer paso hacia tu nueva herramienta de trabajo.\nEstamos aquí para asesorarte en lo que necesites.';
+const heroBgUrl = data?.heroBgUrl || 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&q=80&w=2070';
+const sectionTitle = data?.sectionTitle || 'ESTAMOS PARA AYUDARTE';
+const sectionDescription = data?.sectionDescription || 'Comunícate con nuestros asesores comerciales o visítanos en nuestras oficinas para conocer de cerca la rentabilidad que la Discover 125 ST puede ofrecerte.';
+const sideImageUrl = data?.sideImageUrl || '/discover-side.webp';
+const contactCards = data?.contactCards?.length ? data.contactCards : defaultCards;
+
+const formatText = (text: string) => {
+  if (!text) return '';
+  return text.replace(/\n/g, '<br/>');
+};
+---
+
+<Layout title="Contacto">
+  <main class="w-full bg-white min-h-screen">
+    
+    <!-- Hero Section -->
+    <section class="relative w-full h-[350px] lg:h-[450px] flex items-center justify-center bg-bajaj-blue">
+      <div class="absolute inset-0 z-0">
+        <img src={heroBgUrl} alt="Contacto Discover" class="w-full h-full object-cover object-center" />
+      </div>
+      
+      <div class="absolute inset-0 bg-bajaj-blue/80 z-10"></div>
+      
+      <div class="w-full max-w-6xl mx-auto px-6 relative z-20 text-center border-b-4 border-bajaj-orange pb-8">
+        <h1 class="text-5xl lg:text-6xl font-extrabold text-white mb-4 tracking-tight uppercase">
+          {heroTitle}
+        </h1>
+        <p class="text-lg lg:text-xl text-blue-100 font-medium max-w-2xl mx-auto leading-relaxed" set:html={formatText(heroSubtitle)}></p>
+      </div>
+    </section>
+
+    <!-- Información de Contacto -->
+    <section class="py-24 bg-gray-50">
+      <div class="w-full max-w-6xl mx-auto px-6">
+        
+        <div class="text-center max-w-3xl mx-auto mb-16">
+          <h2 class="text-3xl lg:text-4xl font-extrabold text-bajaj-blue mb-4 uppercase tracking-wide">
+            {sectionTitle}
+          </h2>
+          <p class="text-gray-600 text-lg leading-relaxed">
+            {sectionDescription}
+          </p>
+        </div>
+
+        <!-- Grilla con items-stretch -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-stretch max-w-5xl mx-auto">
+          
+          <!-- Imagen Lateral (igualada a la altura exacta de las tarjetas) -->
+          <div class="relative w-full rounded-2xl overflow-hidden shadow-xl min-h-[400px] lg:min-h-0">
+            <img src={sideImageUrl} alt="Contacto Asesor" class="absolute inset-0 w-full h-full object-cover" />
+          </div>
+
+          <!-- Tarjetas de Contacto -->
+          <div class="flex flex-col gap-6">
+            {contactCards.map((card: any) => (
+              <div class="bg-white border border-gray-100 shadow-sm hover:shadow-lg transition-shadow p-8 rounded-2xl flex items-start gap-6 group hover:border-bajaj-orange">
+                
+                <div class="w-14 h-14 bg-blue-50 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-bajaj-orange transition-colors duration-300">
+                  {card.icon === 'phone' && (
+                    <svg class="w-6 h-6 text-bajaj-blue group-hover:text-white transition-colors duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                  )}
+                  {card.icon === 'mobile' && (
+                    <svg class="w-6 h-6 text-bajaj-blue group-hover:text-white transition-colors duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+                  )}
+                  {card.icon === 'pin' && (
+                    <svg class="w-6 h-6 text-bajaj-blue group-hover:text-white transition-colors duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                  )}
+                </div>
+                
+                <div>
+                  <h3 class="text-xl font-bold text-bajaj-blue mb-2 tracking-wide group-hover:text-bajaj-orange transition-colors">{card.title}</h3>
+                  <p class="text-gray-600 font-medium leading-relaxed" set:html={formatText(card.details)}></p>
+                </div>
+                
+              </div>
+            ))}
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+</Layout>

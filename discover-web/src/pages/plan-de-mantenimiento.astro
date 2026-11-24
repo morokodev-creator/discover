@@ -1,0 +1,137 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { sanityClient } from 'sanity:client';
+
+const query = `*[_type == "maintenancePlanPage"][0]{
+  heroTitle,
+  heroSubtitle,
+  "heroImageUrl": heroImage.asset->url,
+  contentTitle,
+  contentDescription,
+  maintenanceRows[]{
+    service,
+    kilometers,
+    time,
+    details
+  }
+}`;
+
+const data = await sanityClient.fetch(query);
+
+// Respaldos por si aún no cargas datos en Sanity
+const defaultRows = [
+  {
+    service: '1er Servicio',
+    kilometers: '500 - 750 km',
+    time: '30 días',
+    details: 'Cambio de aceite, limpieza de filtro, ajuste de cadena, revisión de frenos y válvulas.',
+  },
+  {
+    service: '2do Servicio',
+    kilometers: '2,500 - 3,000 km',
+    time: '3 meses',
+    details: 'Cambio de aceite, limpieza de filtro de aire, calibración de bujías y revisión eléctrica.',
+  },
+  {
+    service: '3er Servicio',
+    kilometers: '5,000 - 5,500 km',
+    time: '6 meses',
+    details: 'Cambio de aceite y filtro, revisión de sistema de embrague, frenos y suspensión.',
+  },
+  {
+    service: '4to Servicio',
+    kilometers: '7,500 - 8,000 km',
+    time: '9 meses',
+    details: 'Mantenimiento preventivo integral, cambio de aceite y revisión de rodamientos.',
+  },
+];
+
+const heroTitle = data?.heroTitle || 'PLAN DE MANTENIMIENTO';
+const heroSubtitle = data?.heroSubtitle || 'Mantén tu Discover 125 ST siempre al máximo rendimiento.\nSigue nuestro cronograma oficial de servicios preventivos.';
+const heroImageUrl = data?.heroImageUrl || 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&q=80&w=2070';
+
+const contentTitle = data?.contentTitle || 'Cronograma de Servicios';
+const contentDescription = data?.contentDescription || 'Realizar tus mantenimientos a tiempo prolonga la vida útil del motor, conserva el ahorro de combustible y mantiene vigente tu garantía de fábrica.';
+const maintenanceRows = data?.maintenanceRows?.length ? data.maintenanceRows : defaultRows;
+
+const formatText = (text: string) => {
+  if (!text) return '';
+  return text.replace(/\n/g, '<br/>');
+};
+---
+
+<Layout title="Plan de Mantenimiento">
+  <main class="w-full bg-white min-h-screen">
+    
+    <!-- Hero Section -->
+    <section class="relative w-full h-[350px] lg:h-[450px] flex items-center justify-center bg-bajaj-blue">
+      <div class="absolute inset-0 z-0">
+        <img src={heroImageUrl} alt={heroTitle} class="w-full h-full object-cover object-center" />
+      </div>
+      <div class="absolute inset-0 bg-bajaj-blue/80 z-10"></div>
+      
+      <div class="w-full max-w-6xl mx-auto px-6 relative z-20 text-center border-b-4 border-bajaj-orange pb-8">
+        <h1 class="text-4xl lg:text-6xl font-extrabold text-white mb-4 tracking-tight uppercase">
+          {heroTitle}
+        </h1>
+        <p class="text-lg lg:text-xl text-blue-100 font-medium max-w-2xl mx-auto leading-relaxed" set:html={formatText(heroSubtitle)}></p>
+      </div>
+    </section>
+
+    <!-- Contenido y Cuadro de Mantenimiento -->
+    <section class="py-24 px-6 bg-gray-50">
+      <div class="max-w-6xl mx-auto">
+        
+        <div class="text-center max-w-3xl mx-auto mb-16">
+          <h2 class="text-3xl lg:text-4xl font-extrabold text-bajaj-blue mb-4 uppercase tracking-wide">
+            {contentTitle}
+          </h2>
+          <p class="text-gray-600 text-lg leading-relaxed" set:html={formatText(contentDescription)}></p>
+        </div>
+
+        <!-- Tabla Responsiva -->
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-bajaj-blue text-white uppercase text-sm tracking-wider">
+                  <th class="py-5 px-6 font-bold">Servicio</th>
+                  <th class="py-5 px-6 font-bold">Kilometraje</th>
+                  <th class="py-5 px-6 font-bold">Tiempo</th>
+                  <th class="py-5 px-6 font-bold">Trabajos / Observaciones</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200 text-gray-700">
+                {maintenanceRows.map((row: any, index: number) => (
+                  <tr class={index % 2 === 0 ? 'bg-white hover:bg-blue-50/40 transition' : 'bg-gray-50/70 hover:bg-blue-50/40 transition'}>
+                    <td class="py-5 px-6 font-bold text-bajaj-blue whitespace-nowrap">
+                      {row.service}
+                    </td>
+                    <td class="py-5 px-6 font-semibold text-bajaj-orange whitespace-nowrap">
+                      {row.kilometers}
+                    </td>
+                    <td class="py-5 px-6 font-medium whitespace-nowrap">
+                      {row.time}
+                    </td>
+                    <td class="py-5 px-6 leading-relaxed">
+                      {row.details}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- CTA hacia Distribuidores / Talleres -->
+        <div class="mt-14 text-center">
+          <a href="/distribuidores" class="inline-block bg-bajaj-orange text-white font-bold py-4 px-10 rounded-full hover:bg-orange-600 transition shadow-lg text-lg">
+            Ubicar un Taller Autorizado
+          </a>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+</Layout>

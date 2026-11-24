@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+@theme {
+  /* Colores de Marca Bajaj */
+  --color-bajaj-blue: #003D7A;
+  --color-bajaj-orange: #FA5016;
+  --color-bajaj-yellow: #FAD20F;
+  
+  /* Tipografía */
+  --font-poppins: 'Poppins', sans-serif;
+}
+
+@layer base {
+  body {
+    font-family: var(--font-poppins);
+  }
+}

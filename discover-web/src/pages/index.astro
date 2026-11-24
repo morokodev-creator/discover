@@ -1,0 +1,112 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { sanityClient } from 'sanity:client';
+
+const query = `*[_type == "homePage"][0]{
+  heroTitle,
+  heroSubtitle,
+  "heroImageUrl": heroImage.asset->url,
+  heroCtaText,
+  heroCtaLink,
+  trustItems,
+  deliveryTitle,
+  deliveryCards[]{
+    title,
+    description,
+    "imageUrl": image.asset->url
+  },
+  deliveryCtaText,
+  deliveryCtaLink
+}`;
+
+const home = await sanityClient.fetch(query);
+
+// Respaldos por si aún no cargas datos en Sanity
+const heroBg = home?.heroImageUrl || 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&q=80&w=2070';
+
+const defaultTrustItems = [
+  { text: 'Garantía de Fábrica', icon: 'shield' },
+  { text: 'Repuestos Disponibles', icon: 'gear' },
+  { text: 'Red de Talleres Autorizados', icon: 'wrench' },
+];
+
+const defaultDeliveryCards = [
+  { title: 'Ultra Económica', description: 'Rinde hasta 250 km/galón.', imageUrl: '/bajaj-discover.webp' },
+  { title: 'Seguridad CBS', description: 'Sistema de frenado combinado.', imageUrl: '/frenos_cbs.webp' },
+  { title: 'Máxima Resistencia', description: 'Suspensión Nitrox y chasis robusto.', imageUrl: '/Discover-125-ST.jpg' },
+];
+
+const trustItems = home?.trustItems?.length ? home.trustItems : defaultTrustItems;
+const deliveryCards = home?.deliveryCards?.length ? home.deliveryCards : defaultDeliveryCards;
+---
+
+<Layout title="Inicio">
+  <!-- Hero Section -->
+  <section class="relative text-white py-32 px-4 bg-cover bg-center" style={`background-image: url('${heroBg}');`}>
+    <div class="absolute inset-0 bg-bajaj-blue/70"></div> 
+    
+    <div class="max-w-6xl mx-auto relative z-10 text-center md:text-left md:w-2/3">
+      <h1 class="text-5xl md:text-7xl font-bold mb-6 leading-none tracking-tight">
+        {home?.heroTitle || 'Descubre la Discover 125 ST'}
+      </h1>
+      <p class="text-xl md:text-2xl text-gray-200 mb-10 font-light max-w-2xl">
+        {home?.heroSubtitle || 'La herramienta definitiva para potenciar tu trabajo y cuidar tu bolsillo.'}
+      </p>
+      <a href={home?.heroCtaLink || '/contacto'} class="inline-block bg-bajaj-orange text-white font-bold py-4 px-12 rounded-full hover:bg-orange-600 transition shadow-lg text-lg">
+        {home?.heroCtaText || 'Cotizar ahora'}
+      </a>
+    </div>
+  </section>
+
+  <!-- Banda de Confianza -->
+  <section class="bg-bajaj-blue text-white py-8 px-4 border-t border-white/10">
+    <div class="max-w-6xl mx-auto flex flex-wrap justify-center md:justify-between items-center gap-6 text-center font-bold text-lg">
+      {trustItems.map((item: any) => (
+        <div class="flex items-center gap-3">
+          {item.icon === 'shield' && (
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-bajaj-yellow" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          )}
+          {item.icon === 'gear' && (
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-bajaj-yellow" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          )}
+          {item.icon === 'wrench' && (
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-bajaj-yellow" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z" />
+            </svg>
+          )}
+          {item.text}
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- Sección "Hecha para el Delivery" -->
+  <section class="py-24 px-4 bg-gray-50 text-center">
+    <div class="max-w-6xl mx-auto">
+      <h2 class="text-4xl font-bold text-bajaj-blue mb-16">
+        {home?.deliveryTitle || 'Hecha para el Delivery'}
+      </h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+        {deliveryCards.map((card: any) => (
+          <div class="bg-white p-6 rounded-2xl shadow-sm border-t-4 border-bajaj-orange hover:shadow-lg transition group">
+            <div class="overflow-hidden rounded-xl mb-6">
+              <img src={card.imageUrl} alt={card.title} class="w-full h-56 object-cover group-hover:scale-105 transition duration-500" />
+            </div>
+            <h3 class="font-bold text-2xl text-bajaj-blue mb-3">{card.title}</h3>
+            <p class="text-gray-600 font-medium">{card.description}</p>
+          </div>
+        ))}
+      </div>
+
+      <a href={home?.deliveryCtaLink || '/distribuidores'} class="inline-block bg-bajaj-blue text-white font-bold py-4 px-12 rounded-full hover:bg-blue-900 transition shadow-lg text-lg">
+        {home?.deliveryCtaText || 'Encuentra tu distribuidor'}
+      </a>
+    </div>
+  </section>
+</Layout>

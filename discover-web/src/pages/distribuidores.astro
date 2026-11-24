@@ -1,0 +1,317 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { sanityClient } from 'sanity:client';
+
+const query = `*[_type == "dealer"] | order(city asc, name asc){
+  _id,
+  name,
+  city,
+  address,
+  email,
+  services,
+  lat,
+  lng
+}`;
+
+const sanityDealers = await sanityClient.fetch(query);
+
+// Respaldo por si aún no cargas distribuidores en Sanity
+const defaultDealers = [
+  {
+    _id: 'default-1',
+    name: 'Bajaj Center Surquillo',
+    city: 'Lima',
+    address: 'Av. República de Panamá 4321, Surquillo',
+    email: 'ventas.surquillo@discover.pe',
+    services: ['Ventas', 'Repuestos', 'Servicios'],
+    lat: -12.1121,
+    lng: -77.0185,
+  },
+  {
+    _id: 'default-2',
+    name: 'Moto Norte Los Olivos',
+    city: 'Lima',
+    address: 'Av. Alfredo Mendiola 3698, Los Olivos',
+    email: 'ventas.norte@discover.pe',
+    services: ['Ventas', 'Repuestos'],
+    lat: -11.9932,
+    lng: -77.0617,
+  },
+  {
+    _id: 'default-3',
+    name: 'Discover Arequipa Sur',
+    city: 'Arequipa',
+    address: 'Av. Ejército 710, Yanahuara',
+    email: 'arequipa@discover.pe',
+    services: ['Ventas', 'Servicios'],
+    lat: -16.3905,
+    lng: -71.5472,
+  },
+];
+
+const dealers = sanityDealers?.length ? sanityDealers : defaultDealers;
+const cities = [...new Set(dealers.map((d: any) => d.city).filter(Boolean))].sort();
+---
+
+<Layout title="Distribuidores">
+  <!-- Estilos de Leaflet -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+
+  <main class="w-full bg-gray-50 min-h-screen">
+    <!-- Hero Section -->
+    <section class="bg-bajaj-blue text-white py-20 px-6">
+      <div class="max-w-6xl mx-auto text-center">
+        <span class="inline-block py-1 px-3 rounded-full bg-white/10 text-bajaj-yellow font-bold text-xs tracking-widest uppercase mb-4 border border-white/20">
+          Red Autorizada
+        </span>
+        <h1 class="text-4xl lg:text-6xl font-extrabold mb-4 tracking-tight uppercase">
+          Encuentra tu Distribuidor
+        </h1>
+        <p class="text-lg text-blue-100 max-w-2xl mx-auto">
+          Ubica el concesionario, taller autorizado o tienda de repuestos más cercano a ti en todo el Perú.
+        </p>
+      </div>
+    </section>
+
+    <!-- Filtros -->
+    <section class="max-w-6xl mx-auto px-6 -mt-8 relative z-20">
+      <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 flex flex-col md:flex-row gap-4 items-center justify-between">
+        
+        <!-- Filtro Ciudad -->
+        <div class="w-full md:w-1/3">
+          <label for="city-filter" class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+            Ciudad
+          </label>
+          <select
+            id="city-filter"
+            class="w-full border border-gray-300 rounded-xl px-4 py-3 text-gray-700 font-medium focus:outline-none focus:border-bajaj-blue"
+          >
+            <option value="all">Todas las ciudades</option>
+            {cities.map((city: any) => (
+              <option value={city}>{city}</option>
+            ))}
+          </select>
+        </div>
+
+        <!-- Filtro Servicios -->
+        <div class="w-full md:w-2/3">
+          <span class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+            Filtrar por servicio
+          </span>
+          <div class="flex flex-wrap gap-2" id="service-filters">
+            <button type="button" data-service="all" class="service-btn active px-4 py-2.5 rounded-xl text-sm font-bold transition bg-bajaj-blue text-white">
+              Todos
+            </button>
+            <button type="button" data-service="Ventas" class="service-btn px-4 py-2.5 rounded-xl text-sm font-bold transition bg-gray-100 text-gray-700 hover:bg-gray-200">
+              Ventas
+            </button>
+            <button type="button" data-service="Repuestos" class="service-btn px-4 py-2.5 rounded-xl text-sm font-bold transition bg-gray-100 text-gray-700 hover:bg-gray-200">
+              Repuestos
+            </button>
+            <button type="button" data-service="Servicios" class="service-btn px-4 py-2.5 rounded-xl text-sm font-bold transition bg-gray-100 text-gray-700 hover:bg-gray-200">
+              Servicios
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Listado + Mapa -->
+    <section class="max-w-6xl mx-auto px-6 py-12">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        <!-- Lista de Distribuidores -->
+        <div class="lg:col-span-5 space-y-4 max-h-[600px] overflow-y-auto pr-2" id="dealers-list">
+          {dealers.map((dealer: any) => (
+            <div
+              class="dealer-card bg-white p-6 rounded-2xl border-2 border-gray-100 hover:border-bajaj-orange shadow-sm hover:shadow-md transition cursor-pointer"
+              data-id={dealer._id}
+              data-city={dealer.city}
+              data-services={(dealer.services || []).join(',')}
+              data-lat={dealer.lat}
+              data-lng={dealer.lng}
+            >
+              <div class="flex justify-between items-start gap-2 mb-2">
+                <h3 class="text-xl font-bold text-bajaj-blue">{dealer.name}</h3>
+                <span class="text-xs font-bold bg-blue-50 text-bajaj-blue px-3 py-1 rounded-full shrink-0">
+                  {dealer.city}
+                </span>
+              </div>
+
+              <p class="text-gray-600 text-sm mb-2 flex items-start gap-2">
+                <span class="text-bajaj-orange font-bold">📍</span>
+                <span>{dealer.address}</span>
+              </p>
+
+              {dealer.email && (
+                <p class="text-gray-500 text-sm mb-4 flex items-center gap-2">
+                  <span>✉️</span>
+                  <a href={`mailto:${dealer.email}`} class="hover:text-bajaj-orange underline" onclick="event.stopPropagation()">
+                    {dealer.email}
+                  </a>
+                </p>
+              )}
+
+              {dealer.services && dealer.services.length > 0 && (
+                <div class="flex flex-wrap gap-2 pt-3 border-t border-gray-100">
+                  {dealer.services.map((srv: string) => (
+                    <span class="text-xs font-semibold bg-gray-100 text-gray-700 px-2.5 py-1 rounded-md">
+                      {srv}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+
+          <div id="no-results" class="hidden bg-white p-8 rounded-2xl text-center border border-gray-200">
+            <p class="text-gray-500 font-medium">No se encontraron distribuidores con esos filtros.</p>
+          </div>
+        </div>
+
+        <!-- Mapa Leaflet -->
+        <div class="lg:col-span-7 w-full h-[450px] lg:h-[600px] rounded-2xl overflow-hidden shadow-lg border-4 border-white relative z-10">
+          <div id="map" class="w-full h-full"></div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <!-- Script de Leaflet -->
+  <script
+    is:inline
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+
+  <!-- Lógica de Mapa y Filtros -->
+  <script is:inline define:vars={{ dealers }}>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (typeof L === 'undefined') return;
+
+      // Inicializar mapa centrado en Perú / primer distribuidor
+      const initialLat = dealers[0]?.lat || -12.0464;
+      const initialLng = dealers[0]?.lng || -77.0428;
+
+      const map = L.map('map').setView([initialLat, initialLng], 12);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+      }).addTo(map);
+
+      const markersLayer = L.layerGroup().addTo(map);
+      const markersById = {};
+
+      function renderMarkers(list) {
+        markersLayer.clearLayers();
+        const bounds = [];
+
+        list.forEach((dealer) => {
+          if (typeof dealer.lat !== 'number' || typeof dealer.lng !== 'number') return;
+
+          const marker = L.marker([dealer.lat, dealer.lng]).bindPopup(`
+            <div style="font-family: sans-serif; min-width: 180px;">
+              <strong style="color: #003366; font-size: 14px;">${dealer.name}</strong><br/>
+              <span style="font-size: 12px; color: #555;">${dealer.address}</span><br/>
+              ${dealer.email ? `<a href="mailto:${dealer.email}" style="font-size: 12px; color: #ff5500;">${dealer.email}</a>` : ''}
+            </div>
+          `);
+
+          marker.addTo(markersLayer);
+          markersById[dealer._id] = marker;
+          bounds.push([dealer.lat, dealer.lng]);
+        });
+
+        if (bounds.length > 1) {
+          map.fitBounds(bounds, { padding: [40, 40] });
+        } else if (bounds.length === 1) {
+          map.setView(bounds[0], 14);
+        }
+      }
+
+      // Render inicial
+      renderMarkers(dealers);
+
+      // Estado de filtros
+      let selectedCity = 'all';
+      let selectedService = 'all';
+
+      const citySelect = document.getElementById('city-filter');
+      const serviceButtons = document.querySelectorAll('.service-btn');
+      const cards = document.querySelectorAll('.dealer-card');
+      const noResults = document.getElementById('no-results');
+
+      function applyFilters() {
+        const filtered = [];
+
+        cards.forEach((card) => {
+          const cardCity = card.dataset.city;
+          const cardServices = (card.dataset.services || '').split(',');
+          const cardId = card.dataset.id;
+
+          const matchCity = selectedCity === 'all' || cardCity === selectedCity;
+          const matchService = selectedService === 'all' || cardServices.includes(selectedService);
+
+          if (matchCity && matchService) {
+            card.classList.remove('hidden');
+            const dealerObj = dealers.find((d) => d._id === cardId);
+            if (dealerObj) filtered.push(dealerObj);
+          } else {
+            card.classList.add('hidden');
+          }
+        });
+
+        if (filtered.length === 0) {
+          noResults.classList.remove('hidden');
+        } else {
+          noResults.classList.add('hidden');
+        }
+
+        renderMarkers(filtered);
+      }
+
+      citySelect.addEventListener('change', (e) => {
+        selectedCity = e.target.value;
+        applyFilters();
+      });
+
+      serviceButtons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          serviceButtons.forEach((b) => {
+            b.classList.remove('bg-bajaj-blue', 'text-white');
+            b.classList.add('bg-gray-100', 'text-gray-700');
+          });
+          btn.classList.remove('bg-gray-100', 'text-gray-700');
+          btn.classList.add('bg-bajaj-blue', 'text-white');
+
+          selectedService = btn.dataset.service;
+          applyFilters();
+        });
+      });
+
+      // Click en tarjeta -> centrar mapa y abrir popup
+      cards.forEach((card) => {
+        card.addEventListener('click', () => {
+          const lat = parseFloat(card.dataset.lat);
+          const lng = parseFloat(card.dataset.lng);
+          const id = card.dataset.id;
+
+          if (!isNaN(lat) && !isNaN(lng)) {
+            map.setView([lat, lng], 15, { animate: true });
+            if (markersById[id]) {
+              markersById[id].openPopup();
+            }
+          }
+        });
+      });
+    });
+  </script>
+</Layout>

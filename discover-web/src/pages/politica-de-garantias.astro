@@ -1,0 +1,132 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { sanityClient } from 'sanity:client';
+
+const query = `*[_type == "warrantyPolicyPage"][0]{
+  heroTitle,
+  heroSubtitle,
+  "heroImageUrl": heroImage.asset->url,
+  faqs[]{
+    question,
+    answer
+  },
+  "bannerImageUrl": bannerImage.asset->url,
+  bannerText,
+  bannerButtonText,
+  "pdfUrl": pdfFile.asset->url
+}`;
+
+const data = await sanityClient.fetch(query);
+
+// Respaldos por si aún no cargas datos en Sanity
+const defaultFaqs = [
+  {
+    question: '¿Cuál es el periodo de garantía de la Discover 125 ST?',
+    answer: 'La Discover 125 ST cuenta con garantía de fábrica de 12 meses o 20,000 kilómetros, lo que ocurra primero, siempre que cumplas con los mantenimientos periódicos en nuestra red de talleres autorizados.',
+  },
+  {
+    question: '¿Qué cubre la garantía?',
+    answer: 'Cubre defectos de fabricación o ensamblaje en motor, transmisión, sistema eléctrico y componentes estructurales bajo condiciones normales de uso.',
+  },
+  {
+    question: '¿Cómo mantengo vigente mi garantía?',
+    answer: 'Debes realizar todos los servicios programados según el Plan de Mantenimiento en cualquier taller autorizado Bajaj y utilizar únicamente repuestos y lubricantes originales.',
+  },
+];
+
+const heroTitle = data?.heroTitle || 'POLÍTICA DE GARANTÍAS';
+const heroSubtitle = data?.heroSubtitle || 'Respaldamos tu inversión kilómetro a kilómetro.\nConoce los alcances y beneficios de nuestra garantía oficial.';
+const heroImageUrl = data?.heroImageUrl || 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&q=80&w=2070';
+const faqs = data?.faqs?.length ? data.faqs : defaultFaqs;
+
+const bannerImageUrl = data?.bannerImageUrl || 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&q=80&w=2070';
+const bannerText = data?.bannerText || 'Descarga nuestra póliza de garantía completa';
+const bannerButtonText = data?.bannerButtonText || 'Descargar PDF';
+const pdfUrl = data?.pdfUrl || '#';
+
+const formatText = (text: string) => {
+  if (!text) return '';
+  return text.replace(/\n/g, '<br/>');
+};
+---
+
+<Layout title="Política de Garantías">
+  <main class="w-full bg-white min-h-screen">
+    
+    <!-- Hero Section -->
+    <section class="relative w-full h-[350px] lg:h-[450px] flex items-center justify-center bg-bajaj-blue">
+      <div class="absolute inset-0 z-0">
+        <img src={heroImageUrl} alt={heroTitle} class="w-full h-full object-cover object-center" />
+      </div>
+      <div class="absolute inset-0 bg-bajaj-blue/80 z-10"></div>
+      
+      <div class="w-full max-w-6xl mx-auto px-6 relative z-20 text-center border-b-4 border-bajaj-orange pb-8">
+        <h1 class="text-4xl lg:text-6xl font-extrabold text-white mb-4 tracking-tight uppercase">
+          {heroTitle}
+        </h1>
+        <p class="text-lg lg:text-xl text-blue-100 font-medium max-w-2xl mx-auto leading-relaxed" set:html={formatText(heroSubtitle)}></p>
+      </div>
+    </section>
+
+    <!-- FAQ Section (Acordeón) -->
+    <section class="py-24 px-6 bg-gray-50">
+      <div class="max-w-3xl mx-auto">
+        <div class="text-center mb-14">
+          <h2 class="text-3xl lg:text-4xl font-extrabold text-bajaj-blue mb-4 uppercase tracking-wide">
+            Preguntas Frecuentes
+          </h2>
+          <p class="text-gray-600 text-lg">
+            Resolvemos las principales dudas sobre la cobertura y el uso de tu garantía.
+          </p>
+        </div>
+
+        <div class="space-y-4">
+          {faqs.map((faq: any, index: number) => (
+            <details class="group bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:border-bajaj-orange transition" open={index === 0}>
+              <summary class="flex justify-between items-center font-bold text-lg cursor-pointer list-none p-6 text-bajaj-blue hover:bg-gray-50 transition gap-4">
+                <span>{faq.question}</span>
+                <span class="transition-transform duration-300 group-open:rotate-180 text-bajaj-orange shrink-0">
+                  <svg fill="none" height="24" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" width="24">
+                    <path d="M6 9l6 6 6-6"></path>
+                  </svg>
+                </span>
+              </summary>
+              <div class="px-6 pb-6 pt-2 text-gray-600 leading-relaxed border-t border-gray-100">
+                <p set:html={formatText(faq.answer)}></p>
+              </div>
+            </details>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Banner de Descarga PDF -->
+    <section class="py-20 px-6 bg-white">
+      <div class="max-w-5xl mx-auto">
+        <div class="relative rounded-3xl overflow-hidden shadow-xl min-h-[280px] flex items-center justify-center text-center p-10 lg:p-16">
+          <img src={bannerImageUrl} alt="Descargar póliza" class="absolute inset-0 w-full h-full object-cover" />
+          <div class="absolute inset-0 bg-bajaj-blue/85"></div>
+
+          <div class="relative z-10 max-w-2xl mx-auto">
+            <h2 class="text-3xl lg:text-4xl font-extrabold text-white mb-8 leading-tight">
+              {bannerText}
+            </h2>
+            <a
+              href={pdfUrl}
+              target={pdfUrl !== '#' ? '_blank' : undefined}
+              rel="noopener noreferrer"
+              download
+              class="inline-flex items-center gap-3 bg-bajaj-orange text-white font-bold py-4 px-10 rounded-full hover:bg-orange-600 transition shadow-lg text-lg"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              {bannerButtonText}
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</Layout>

@@ -1,0 +1,202 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { sanityClient } from 'sanity:client';
+
+const query = `*[_type == "productPage"][0]{
+  heroBadge,
+  heroTitle,
+  heroDescription,
+  heroCtaText,
+  heroCtaLink,
+  "heroImageUrl": heroImage.asset->url,
+  quickSpecs,
+  features[]{
+    title,
+    description,
+    bulletPoints,
+    "imageUrl": image.asset->url
+  },
+  specCategories[]{
+    categoryTitle,
+    specs
+  }
+}`;
+
+const product = await sanityClient.fetch(query);
+
+// Respaldos por si aún no cargas datos en Sanity
+const defaultQuickSpecs = [
+  { value: '124.6', unit: 'cc', label: 'Cilindrada' },
+  { value: '13', unit: 'HP', label: 'Potencia Máxima' },
+  { value: '250', unit: 'km/g', label: 'Rendimiento' },
+  { value: '5', unit: '', label: 'Velocidades' },
+];
+
+const defaultFeatures = [
+  {
+    title: 'Motor DTS-i de 4 Válvulas',
+    description: 'Equipada con la tecnología patentada de doble bujía (DTS-i), la Discover 125 ST garantiza una combustión más eficiente, entregando mayor potencia sin sacrificar el rendimiento de combustible. Perfecta para el tráfico pesado.',
+    bulletPoints: ['Aceleración suave y constante', 'Menor emisión de gases'],
+    imageUrl: '/discover-motor.jpg',
+  },
+  {
+    title: 'Frenos de Disco Lobulados',
+    description: 'La seguridad es vital en el delivery. Su freno de disco delantero lobulado de 200mm disipa mejor el calor, asegurando una frenada precisa y confiable en cualquier condición climática.',
+    bulletPoints: [],
+    imageUrl: '/discover-tablero.jpg',
+  },
+  {
+    title: 'Suspensión Monoshock Nitrox',
+    description: 'Olvídate de los baches. La suspensión trasera Monoshock con cámara de nitrógeno absorbe los impactos de la ciudad, ofreciendo una estabilidad superior y cuidando tu espalda en jornadas largas.',
+    bulletPoints: [],
+    imageUrl: '/discover-suspension.jpg',
+  },
+];
+
+const defaultSpecCategories = [
+  {
+    categoryTitle: 'Motor y Transmisión',
+    specs: [
+      { label: 'Tipo', value: '4 tiempos, DTS-i, 4 Válvulas' },
+      { label: 'Cilindrada', value: '124.6 cc' },
+      { label: 'Potencia Máxima', value: '13.0 @ 9000 (HP @ RPM)' },
+      { label: 'Transmisión', value: 'Mecánica de 5 velocidades' },
+    ],
+  },
+  {
+    categoryTitle: 'Frenos, Llantas y Suspensión',
+    specs: [
+      { label: 'Freno Delantero', value: 'Disco lobulado (200 mm)' },
+      { label: 'Freno Trasero', value: 'Tambor (130 mm)' },
+      { label: 'Suspensión Trasera', value: 'Monoshock Nitrox' },
+    ],
+  },
+];
+
+const quickSpecs = product?.quickSpecs?.length ? product.quickSpecs : defaultQuickSpecs;
+const features = product?.features?.length ? product.features : defaultFeatures;
+const specCategories = product?.specCategories?.length ? product.specCategories : defaultSpecCategories;
+---
+
+<Layout title={product?.heroTitle || 'Discover 125 ST'}>
+  
+  <!-- HERO PRODUCTO (50/50 Split) -->
+  <section class="flex flex-col lg:flex-row w-full min-h-[600px] lg:h-[85vh]">
+    
+    <!-- Mitad Izquierda: Fondo Azul y Textos -->
+    <div class="w-full lg:w-1/2 bg-bajaj-blue flex flex-col justify-center px-6 lg:px-20 py-20 lg:py-0">
+      <div class="max-w-xl lg:ml-auto w-full">
+        <span class="inline-block py-1 px-3 rounded-full bg-white/10 text-bajaj-yellow font-bold text-sm tracking-widest uppercase mb-4 border border-white/20">
+          {product?.heroBadge || 'La favorita del delivery'}
+        </span>
+        <h1 class="text-5xl lg:text-7xl font-extrabold text-white mb-6 leading-none tracking-tight">
+          {product?.heroTitle || 'Discover 125 ST'}
+        </h1>
+        <p class="text-lg text-blue-100 mb-8 leading-relaxed">
+          {product?.heroDescription || 'Potencia, rendimiento y el mejor costo-beneficio del mercado. Diseñada para soportar largas jornadas de trabajo con una comodidad insuperable.'}
+        </p>
+        <div>
+          <a href={product?.heroCtaLink || '/contacto'} class="inline-flex justify-center items-center bg-bajaj-orange text-white font-bold py-4 px-10 rounded-full hover:bg-orange-600 transition shadow-lg text-lg min-w-[200px]">
+            {product?.heroCtaText || 'Cotizar ahora'}
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mitad Derecha: Imagen a sangre -->
+    <div class="w-full lg:w-1/2 relative min-h-[400px] bg-gray-100">
+      <img 
+        src={product?.heroImageUrl || '/discover-hero.webp'} 
+        alt={product?.heroTitle || 'Bajaj Discover 125 ST'} 
+        class="absolute inset-0 w-full h-full object-cover" 
+      />
+    </div>
+
+  </section>
+
+  <!-- QUICK SPECS -->
+  <section class="bg-white border-b border-gray-200 shadow-xl relative z-20 -mt-10 mx-4 lg:mx-auto max-w-5xl rounded-2xl p-6 lg:p-10">
+    <div class="flex flex-wrap md:flex-nowrap justify-between text-center gap-6">
+      {quickSpecs.map((spec: any, index: number) => (
+        <div class={`w-full md:w-1/4 ${index < quickSpecs.length - 1 ? 'border-b md:border-b-0 md:border-r border-gray-100 pb-4 md:pb-0' : ''}`}>
+          <p class="text-3xl font-extrabold text-bajaj-blue mb-1">
+            {spec.value} {spec.unit && <span class="text-lg">{spec.unit}</span>}
+          </p>
+          <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">{spec.label}</p>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- DETALLES (Zigzag dinámico) -->
+  <section class="py-24 px-6 bg-gray-50 overflow-hidden">
+    <div class="max-w-6xl mx-auto space-y-24">
+      {features.map((feature: any, index: number) => {
+        const isEven = index % 2 === 0;
+        return (
+          <div class="flex flex-col lg:flex-row gap-12 items-center">
+            <!-- Texto -->
+            <div class={`w-full lg:w-1/2 ${isEven ? 'order-2 lg:order-1' : 'order-2'}`}>
+              <h3 class="text-3xl font-bold text-bajaj-blue mb-4">{feature.title}</h3>
+              <p class="text-gray-600 text-lg leading-relaxed mb-6">
+                {feature.description}
+              </p>
+              {feature.bulletPoints && feature.bulletPoints.length > 0 && (
+                <ul class="space-y-3 font-semibold text-gray-700">
+                  {feature.bulletPoints.map((point: string) => (
+                    <li class="flex items-center gap-3">
+                      <span class="text-bajaj-orange">✔</span> {point}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <!-- Imagen -->
+            <div class={`w-full lg:w-1/2 ${isEven ? 'order-1 lg:order-2' : 'order-1'}`}>
+              <img 
+                src={feature.imageUrl} 
+                alt={feature.title} 
+                class="rounded-2xl shadow-xl border-4 border-white w-full object-cover aspect-video" 
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  </section>
+
+  <!-- FICHA TÉCNICA -->
+  <section id="ficha-tecnica" class="py-24 px-6 bg-white">
+    <div class="max-w-3xl mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="text-4xl font-extrabold text-bajaj-blue mb-4">Ficha Técnica</h2>
+        <p class="text-gray-500 font-medium">Especificaciones al detalle de la {product?.heroTitle || 'Discover 125 ST'}.</p>
+      </div>
+
+      <div class="space-y-4">
+        {specCategories.map((category: any, index: number) => (
+          <details class="group bg-gray-50 border border-gray-200 rounded-xl overflow-hidden" open={index === 0}>
+            <summary class="flex justify-between items-center font-bold text-lg cursor-pointer list-none p-6 text-bajaj-blue hover:bg-gray-100 transition">
+              {category.categoryTitle}
+              <span class="transition group-open:rotate-180">
+                <svg fill="none" height="24" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="24"><path d="M6 9l6 6 6-6"></path></svg>
+              </span>
+            </summary>
+            <div class="px-6 pb-6 pt-2">
+              <ul class="divide-y divide-gray-200 border-t border-gray-200 pt-4">
+                {category.specs?.map((item: any) => (
+                  <li class="py-3 flex justify-between gap-4">
+                    <span class="text-gray-500 font-semibold">{item.label}</span>
+                    <span class="text-gray-900 font-bold text-right">{item.value}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
+
+</Layout>
